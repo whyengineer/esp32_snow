@@ -1,0 +1,28 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+DEFAULT_ETHERNET_PHY_CONFIG	eth.c	25;"	d	file:
+ETH_CONNECTED_BIT	include/event.h	12;"	d
+ETH_GOTIP_BIT	include/event.h	13;"	d
+EXAMPLE_DEFAULT_PWD	wifi.c	17;"	d	file:
+EXAMPLE_DEFAULT_SSID	wifi.c	16;"	d	file:
+EXAMPLE_MAX_STA_CONN	wifi.c	19;"	d	file:
+PIN_SMI_MDC	eth.c	27;"	d	file:
+PIN_SMI_MDIO	eth.c	28;"	d	file:
+STA_CONNECTED_BIT	include/event.h	9;"	d
+STA_GOTIP_BIT	include/event.h	10;"	d
+_ETH_H	include/eth.h	2;"	d
+_EVENT_H	include/event.h	2;"	d
+_WIFI_H	include/wifi.h	2;"	d
+ap_event_group	event.c	/^EventGroupHandle_t ap_event_group;\/\/24bit$/;"	v
+eth_event_group	event.c	/^EventGroupHandle_t eth_event_group;\/\/24bit$/;"	v
+eth_gpio_config_rmii	eth.c	/^static void eth_gpio_config_rmii(void)$/;"	f	file:
+eth_init	eth.c	/^void eth_init(){$/;"	f
+event_engine_init	event.c	/^void event_engine_init(){$/;"	f
+event_handler	event.c	/^static esp_err_t event_handler(void *ctx, system_event_t *event)$/;"	f	file:
+station_event_group	event.c	/^EventGroupHandle_t station_event_group;\/\/24bit$/;"	v
+wifi_init_softap	wifi.c	/^void wifi_init_softap()$/;"	f
+wifi_init_sta	wifi.c	/^void wifi_init_sta()$/;"	f
