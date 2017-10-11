@@ -13,7 +13,7 @@
 #include "event.h"
 
 
-#define EXAMPLE_DEFAULT_SSID "Transee21_TP1"
+#define EXAMPLE_DEFAULT_SSID "Transee04"
 #define EXAMPLE_DEFAULT_PWD "02197545"
 
 #define AP_SSID "esp32"

@@ -39,13 +39,14 @@ static void wm8979_interface()
 
 	//WM8978_REGVAL_TBL[WM8978_AUDIO_INTERFACE]|=bit0;//mono left phase
 	WM8978_REGVAL_TBL[WM8978_AUDIO_INTERFACE] &=~(bit6|bit5);//16bit
+	//WM8978_REGVAL_TBL[WM8978_AUDIO_INTERFACE] |=bit6;//16bit
 	//WM8978_REGVAL_TBL[WM8978_AUDIO_INTERFACE]|=(bit6|bit5);//32bit
 	WM8978_Write_Reg(WM8978_AUDIO_INTERFACE,WM8978_REGVAL_TBL[WM8978_AUDIO_INTERFACE]);
-	WM8978_REGVAL_TBL[WM8978_CLOCKING]|=bit0; //the codec ic is master mode 
-	WM8978_REGVAL_TBL[WM8978_CLOCKING]|=bit3|bit2;// 100 256/16=16; 16 bit
-	WM8978_REGVAL_TBL[WM8978_CLOCKING]&=~(bit7|bit6|bit5); 
-	WM8978_REGVAL_TBL[WM8978_CLOCKING]|=(bit7|bit5);// 101 48/6=8
-	WM8978_REGVAL_TBL[WM8978_CLOCKING]|=bit8;
+	//WM8978_REGVAL_TBL[WM8978_CLOCKING]|=bit0; //the codec ic is master mode 
+	//WM8978_REGVAL_TBL[WM8978_CLOCKING]|=bit3|bit2;// 100 256/16=16; 16 bit
+	WM8978_REGVAL_TBL[WM8978_CLOCKING]&=~(bit7|bit6|bit5);//000 
+	//WM8978_REGVAL_TBL[WM8978_CLOCKING]|=(bit7|bit5);// 101 48/6=8
+	WM8978_REGVAL_TBL[WM8978_CLOCKING]&=~bit8;//mclk
 	WM8978_Write_Reg(WM8978_CLOCKING,WM8978_REGVAL_TBL[WM8978_CLOCKING]);
 	//WM8978_REGVAL_TBL[WM8978_CLOCKING]&=~bit8;//mclk is the clk source
 }
@@ -81,7 +82,7 @@ static void wm8979_loopback()
 uint8_t WM8978_Init(void)
 {
 	//??Ϊͨ???
-	wm8979_pll(0X3126E9,0x08);
+	//wm8979_pll(0X3126E9,0x08);
 	wm8979_interface();
 	WM8978_Write_Reg(1,0X3B);	//R1,MICEN??Ϊ1(MICʹ?),BIASEN??Ϊ1(ģ?????),VMIDSEL[1:0]??Ϊ:11(5K)
 	WM8978_Write_Reg(2,0X1B0);	//R2,ROUT1,LOUT1???ʹ?(??????Թ??),BOOSTENR,BOOSTENLʹ?
@@ -214,12 +215,11 @@ void aplay(char* filename){
     int datalen= wav_head.wSampleLength;
     printf("channels:%d,frequency:%d,bit:%d\n",channels,frequency,bit);
     char* samples_data = malloc(1024);
-
-   	while(datalen){
+   	do{
    		rlen=fread(samples_data,1,1024,f);
-   		datalen-=rlen;
+   		//datalen-=rlen;
     	hal_i2s_write(0,samples_data,rlen,5000);
-    }
+    }while(rlen>0);
     fclose(f);
     free(samples_data);
 }

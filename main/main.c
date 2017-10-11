@@ -64,7 +64,22 @@ void app_main()
     io_conf.pull_up_en = 0;
     gpio_config(&io_conf);
     hal_i2c_init(0,5,17);
-    hal_i2s_init(0,8000,16,2);
+    hal_i2s_init(0,48000,16,2);
+    WM8978_Init();
+    WM8978_ADDA_Cfg(1,1); 
+    WM8978_Input_Cfg(1,0,0);     
+    WM8978_Output_Cfg(1,0); 
+    WM8978_MIC_Gain(25);
+    WM8978_AUX_Gain(0);
+    WM8978_LINEIN_Gain(0);
+    WM8978_SPKvol_Set(0);
+    WM8978_HPvol_Set(30,30);
+    WM8978_EQ_3D_Dir(1);
+    WM8978_EQ1_Set(0,24);
+    WM8978_EQ2_Set(0,24);
+    WM8978_EQ3_Set(0,24);
+    WM8978_EQ4_Set(0,24);
+    WM8978_EQ5_Set(0,24);
     // sdmmc_host_t host = SDMMC_HOST_DEFAULT();
     // sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
     // esp_vfs_fat_sdmmc_mount_config_t mount_config = {
@@ -114,24 +129,26 @@ void app_main()
     //char databuff[100]={0};
     //int len=0;
     //xTaskCreatePinnedToCore
-    //char samples_data[64];
-    //memset(samples_data,0,1024);
+    char *samples_data;
+    samples_data=malloc(256);
+    memset(samples_data,0,256);
     //http_client_get("http://vop.baidu.com/server_api",&settings_null,NULL);
     size_t free8start=xPortGetFreeHeapSizeCaps(MALLOC_CAP_8BIT);
     size_t free32start=xPortGetFreeHeapSizeCaps(MALLOC_CAP_32BIT);
     ESP_LOGI(TAG,"free mem8bit: %d mem32bit: %d\n",free8start,free32start);
+    gpio_set_level(GPIO_OUTPUT_IO_0, 1);
     uint8_t cnt=0;
     while(1){
-        gpio_set_level(GPIO_OUTPUT_IO_0, cnt%2);
+        //gpio_set_level(GPIO_OUTPUT_IO_0, cnt%2);
         //memset(samples_data,0,1024);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        //vTaskDelay(1000 / portTICK_PERIOD_MS);
 
         //ESP_LOGI(TAG, "cnt:%d",cnt);
-        //aplay("/sdcard/test.wav");
+        aplay("/sdcard/music.wav");
         //hal_i2s_read(0,samples_data,256,portMAX_DELAY);
-        //hal_i2s_write(0,samples_data,256,0);
+        //hal_i2s_write(0,samples_data,256,portMAX_DELAY);
         //vTaskDelay(5000 / portTICK_PERIOD_MS);
-        cnt++;
+        //cnt++;
     }
 }
 
