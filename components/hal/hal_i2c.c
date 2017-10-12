@@ -48,6 +48,7 @@ esp_err_t hal_i2c_master_mem_read(i2c_port_t i2c_num, uint8_t DevAddr,uint8_t Me
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();//a cmd list
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, ( DevAddr << 1 ) | I2C_MASTER_WRITE, ACK_CHECK_EN);
+    i2c_master_write_byte(cmd, MemAddr, ACK_CHECK_EN);
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, ( DevAddr << 1 ) | I2C_MASTER_READ, ACK_CHECK_EN);
     if (size > 1) {
