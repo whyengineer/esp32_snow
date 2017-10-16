@@ -37,6 +37,7 @@
 #include <dirent.h>
 #include "esp_heap_alloc_caps.h"
 #include "euler.h"
+#include "websocket.h"
 
 #define TAG "main:"
 // typedef int (*http_data_cb) (http_parser*, const char *at, size_t length);
@@ -115,8 +116,8 @@ void app_main()
         ESP_LOGI(TAG, "ETHPGW:"IPSTR, IP2STR(&ip.gw));
         ESP_LOGI(TAG, "~~~~~~~~~~~");
     }
-    //xTaskCreate(&audiostream_task, "audio_task",2048, NULL, 6, NULL);
-    xTaskCreate(&euler_task, "euler_task", 2048, NULL, 5, NULL);
+    xTaskCreate(&ws_server, "websocket_task",4096, NULL, 5, NULL);
+    xTaskCreate(&euler_task, "euler_task", 8196, NULL, 5, NULL);
     xTaskCreate(webserver_task, "web_server_task", 8196, NULL, 5, NULL);
     vTaskDelay(2000);
     

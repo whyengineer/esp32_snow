@@ -241,6 +241,7 @@ void led_ctrl(http_parser* a,char*url,char* body){
 	sprintf(chunk_len,"%x\r\n",strlen(out));
 	write(client_fd, chunk_len, strlen(chunk_len));
 	write(client_fd, out, strlen(out));
+  free(out);
   	write(client_fd,"\r\n",2);
   	chunk_end(client_fd);
 	//send(client,out,strlen(out),MSG_WAITALL);
