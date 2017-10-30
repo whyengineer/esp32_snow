@@ -340,32 +340,6 @@ void webserver_task( void *pvParameters ){
 	esp_err_t err;
 	ESP_LOGI(TAG,"webserver start");
 	uint32_t request_cnt=0;
-	//init gpio
-	gpio_config_t io_conf;
-    io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_OUTPUT;
-    io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
-    io_conf.pull_down_en = 0;
-    io_conf.pull_up_en = 0;
-    gpio_config(&io_conf);
-	//init sd card
-	sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-        .format_if_mount_failed = true,
-        .max_files = 10
-    };
-    sdmmc_card_t* card;
-    err = esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_config, &card);
-    if (err != ESP_OK) {
-        if (err == ESP_FAIL) {
-            printf("Failed to mount filesystem. If you want the card to be formatted, set format_if_mount_failed = true.");
-        } else {
-            printf("Failed to initialize the card (%d). Make sure SD card lines have pull-up resistors in place.", err);
-        }
-        return;
-    }
-    sdmmc_card_print_info(stdout, card);
 
 	(void) pvParameters;
 	http_parser parser;

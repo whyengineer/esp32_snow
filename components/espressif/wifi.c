@@ -44,7 +44,7 @@ void wifi_init_sta()
     ESP_LOGI(TAG, "wifi_init_sta finished.");
     ESP_LOGI(TAG, "connect to ap SSID:%s password:%s \n",
 	    EXAMPLE_DEFAULT_SSID,EXAMPLE_DEFAULT_PWD);
-    esp_wifi_set_ps(WIFI_PS_MODEM);
+    //esp_wifi_set_ps(WIFI_PS_MODEM);
 }
 void wifi_init_softap()
 {

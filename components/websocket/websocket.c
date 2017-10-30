@@ -29,7 +29,7 @@
 #include "esp_log.h"
 #include "websocket.h"
 #include "freertos/FreeRTOS.h"
-#include "esp_heap_alloc_caps.h"
+#include "esp_heap_caps.h"
 #include "hwcrypto/sha.h"
 #include "esp_system.h"
 #include "wpa2/utils/base64.h"
@@ -123,11 +123,11 @@ static void ws_server_netconn_serve(struct netconn *conn) {
 	WS_frame_header_t* p_frame_hdr;
 
 	//allocate memory for SHA1 input
-	p_SHA1_Inp = pvPortMallocCaps(WS_CLIENT_KEY_L + sizeof(WS_sec_conKey),
+	p_SHA1_Inp = heap_caps_malloc(WS_CLIENT_KEY_L + sizeof(WS_sec_conKey),
 			MALLOC_CAP_8BIT);
 
 	//allocate memory for SHA1 result
-	p_SHA1_result = pvPortMallocCaps(SHA1_RES_L, MALLOC_CAP_8BIT);
+	p_SHA1_result = heap_caps_malloc(SHA1_RES_L, MALLOC_CAP_8BIT);
 
 	//Check if malloc suceeded
 	if ((p_SHA1_Inp != NULL) && (p_SHA1_result != NULL)) {
@@ -167,7 +167,7 @@ static void ws_server_netconn_serve(struct netconn *conn) {
 				free(p_SHA1_result);
 
 				//allocate memory for handshake
-				p_payload = pvPortMallocCaps(
+				p_payload = heap_caps_malloc(
 						sizeof(WS_srv_hs) + i - WS_SPRINTF_ARG_L,
 						MALLOC_CAP_8BIT);
 
@@ -213,7 +213,7 @@ static void ws_server_netconn_serve(struct netconn *conn) {
 							if (p_frame_hdr->mask) {
 
 								//allocate memory for decoded message
-								p_payload = pvPortMallocCaps(
+								p_payload = heap_caps_malloc(
 										p_frame_hdr->payload_length + 1,
 										MALLOC_CAP_8BIT);
 
