@@ -195,34 +195,6 @@ void WM8978_LINEIN_Gain(uint8_t gain)
  	WM8978_Write_Reg(48,regval|gain<<4);//??R48
 } 
 
-void aplay(char* filename){
-	//"/sdcard/test.wav"
-	WAV_HEADER wav_head;
-	FILE* f = fopen(filename, "r");
-    if (f == NULL) {
-        printf("Failed to open file for writing");
-        return;
-    }
-    //fprintf(f, "Hello %s!\n", card->cid.name);
-    int rlen=fread(&wav_head,1,sizeof(wav_head),f);
-    if(rlen!=sizeof(wav_head)){
-        printf("%s\n","read faliled");
-        return;
-    }
-    int channels = wav_head.wChannels;
-    int frequency = wav_head.nSamplesPersec;
-    int bit = wav_head.wBitsPerSample;
-    int datalen= wav_head.wSampleLength;
-    printf("channels:%d,frequency:%d,bit:%d\n",channels,frequency,bit);
-    char* samples_data = malloc(1024);
-   	do{
-   		rlen=fread(samples_data,1,1024,f);
-   		//datalen-=rlen;
-    	hal_i2s_write(0,samples_data,rlen,5000);
-    }while(rlen>0);
-    fclose(f);
-    free(samples_data);
-}
 //WM8978 AUXR,AUXL(PWM音频部分)增益设置(AUXR/L-->ADC输入部分的增益)
 //gain:0~7,0表示通道禁止,1~7,对应-12dB~6dB,3dB/Step
 void WM8978_AUX_Gain(uint8_t gain)

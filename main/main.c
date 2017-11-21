@@ -39,8 +39,7 @@
 #include "euler.h"
 #include "websocket.h"
 #include "esp_heap_caps.h"
-#include "mad.h"
-
+#include "aplay.h"
 
 #define TAG "main:"
 // typedef int (*http_data_cb) (http_parser*, const char *at, size_t length);
@@ -57,7 +56,7 @@ void app_main()
     event_engine_init();
     nvs_flash_init();
     tcpip_adapter_init();
-    wifi_init_sta("Transee21_TP1","02197545");
+    wifi_init_sta("Frankie","yp6sfnff");
     //wifi_init_softap();
     /*init gpio*/
     gpio_config_t io_conf;
@@ -118,8 +117,8 @@ void app_main()
         ESP_LOGI(TAG, "ETHPGW:"IPSTR, IP2STR(&ip.gw));
         ESP_LOGI(TAG, "~~~~~~~~~~~");
     }
-    xTaskCreate(&ws_server, "websocket_task",4096, NULL, 5, NULL);
-    xTaskCreate(&euler_task, "euler_task", 8196, NULL, 5, NULL);
+    //xTaskCreate(&ws_server, "websocket_task",4096, NULL, 5, NULL);
+    //xTaskCreate(&euler_task, "euler_task", 8196, NULL, 5, NULL);
     xTaskCreate(webserver_task, "web_server_task", 4096, NULL, +6, NULL);
     vTaskDelay(2000);
     //bt_speaker_start();
@@ -148,10 +147,12 @@ void app_main()
         //vTaskDelay(1000 / portTICK_PERIOD_MS);
         //vTaskSuspend(NULL);
         //ESP_LOGI(TAG, "cnt:%d",cnt);
-        aplay("/sdcard/music.wav");
+        //aplay("/sdcard/music.wav");
+        aplay_mp3("/sdcard/music.mp3");
+
         //hal_i2s_read(0,samples_data,256,portMAX_DELAY);
         //hal_i2s_write(0,samples_data,256,portMAX_DELAY);
-        //vTaskDelay(5000 / portTICK_PERIOD_MS);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
         //cnt++;
     }
 }

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "hal_i2s.h"
 #include "aplay.h"
+#include <sys/stat.h>
 
 #ifdef CONFIG_AUDIO_MAD
   #include "mad.h"
@@ -36,14 +37,14 @@ void aplay_wav(char* filename){
     //fprintf(f, "Hello %s!\n", card->cid.name);
     int rlen=fread(&wav_head,1,sizeof(wav_head),f);
     if(rlen!=sizeof(wav_head)){
-        printf("%s\n","read faliled");
+        ESP_LOGE(TAG,"read faliled");
         return;
     }
     int channels = wav_head.wChannels;
     int frequency = wav_head.nSamplesPersec;
     int bit = wav_head.wBitsPerSample;
     int datalen= wav_head.wSampleLength;
-    printf("channels:%d,frequency:%d,bit:%d\n",channels,frequency,bit);
+    ESP_LOGI(TAG,"channels:%d,frequency:%d,bit:%d\n",channels,frequency,bit);
     char* samples_data = malloc(1024);
    	do{
    		rlen=fread(samples_data,1,1024,f);
@@ -57,19 +58,16 @@ void aplay_wav(char* filename){
 
 #ifdef CONFIG_AUDIO_HELIX
 
-static unsigned char read_buffer[MAINBUF_SIZE];
-
-
-void aplay_mp3(const char* filename){
-  unsigned char *read_buffer=malloc(MAINBUF_SIZE);
+void aplay_mp3(char* filename){
+  unsigned char *read_buffer=heap_caps_malloc(MAINBUF_SIZE,MALLOC_CAP_SPIRAM);
   if(read_buffer==NULL){
     ESP_LOGE(TAG,"malloc read buf failed");
     return;
   }
   FILE *fd1 = fopen(filename, "rb");
   if (!fd1) {
-    free(read_buffer);
-    ESP_LOGE(TAG,"open %s error\n",filename);
+    heap_caps_free(read_buffer);
+    ESP_LOGE(TAG,"open %s error",filename);
     return;
   }
   // FILE *fd2 = fopen("/sdcard/out.pcm", "w");
@@ -82,16 +80,16 @@ void aplay_mp3(const char* filename){
   HMP3Decoder *decoder = MP3InitDecoder(); 
   if (!decoder) {
       fclose(fd1);
-      free(read_buffer);
-      ESP_LOGE(TAG,"init mp3 decoder error\n");
+      heap_caps_free(read_buffer);
+      ESP_LOGE(TAG,"init mp3 decoder error");
       return;
   }
-  short int *out=malloc(1152 * 2);
+  short int *out=heap_caps_malloc(1152 * 2,MALLOC_CAP_SPIRAM);
   if(out==NULL){
     fclose(fd1);
-    free(read_buffer);
+    heap_caps_free(read_buffer);
     MP3FreeDecoder(decoder);
-    ESP_LOGE(TAG,"malloc out buf failed\n");
+    ESP_LOGE(TAG,"malloc out buf failed");
     return;
   }
   struct stat st; 
@@ -112,9 +110,9 @@ void aplay_mp3(const char* filename){
       tag_len = ((tag[6] & 0x7F) << 21) |
         ((tag[7] & 0x7F) << 14) |
         ((tag[8] & 0x7F) << 7) | (tag[9] & 0x7F);
-      ESP_LOGI(TAG,"tag_len: %d\n", tag_len);
+      ESP_LOGI(TAG,"tag_len: %d", tag_len);
       if (tag_len >= size) {
-        ESP_LOGE(TAG,"file format error\n");
+        ESP_LOGE(TAG,"file format error");
         eof = 1;
       } else {
         fseek(fd1, tag_len - 10, SEEK_SET);
@@ -155,7 +153,7 @@ void aplay_mp3(const char* filename){
       /* set sample rate */
       /* write to sound device */
       outputSamps = frame_info.outputSamps;
-      //printf("sample rate: %d, channels: %d, outputSamps: %d\n", frame_info.samprate, frame_info.nChans, outputSamps);
+      ESP_LOGI(TAG,"sample rate: %d, channels: %d, outputSamps: %d\n", frame_info.samprate, frame_info.nChans, outputSamps);
       if (outputSamps > 0) {
           if (frame_info.nChans == 1) {
               int i;
@@ -165,7 +163,7 @@ void aplay_mp3(const char* filename){
               }
               outputSamps *= 2;
           }
-          fwrite(out, 1, outputSamps * sizeof(short), fd2);
+          //fwrite(out, 1, outputSamps * sizeof(short), fd2);
       } else {
           //printf("no samples\n");
       }
@@ -193,10 +191,10 @@ void aplay_mp3(const char* filename){
 
   }
   MP3FreeDecoder(decoder);
-  free(out);
+  heap_caps_free(out);
   fclose(fd1);
-  free(read_buffer);
-  ESP_LOGI(TAG,"play file:%d finished",filename);
+  heap_caps_free(read_buffer);
+  ESP_LOGI(TAG,"play file:%s finished",filename);
 }
 #endif
 // static enum mad_flow input_func(void *data, struct mad_stream *stream);
