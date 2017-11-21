@@ -1,0 +1,25 @@
+menu "ESP32_SNOW Conifg"
+
+choice MP3_DECODE
+    prompt "mp3 deocde lib chocie"
+    default CONFIG_AUDIO_MAD
+    help
+        Select the MP3 deocde lib to use.
+
+config AUDIO_MAD
+    bool "AUDIO MAD"
+    help
+        Select mad https://sourceforge.net/projects/mad/files/libmad/
+
+config AUDIO_HELIX
+    bool "AUDIO HELIX"
+    help
+        Select helix https://www.helixcommunity.org/projects/datatype/Mp3dec
+
+endchoice
+
+
+
+
+
+endmenu

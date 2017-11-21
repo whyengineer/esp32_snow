@@ -39,7 +39,8 @@
 #include "euler.h"
 #include "websocket.h"
 #include "esp_heap_caps.h"
-//#include "bt_speaker.h"
+#include "mad.h"
+
 
 #define TAG "main:"
 // typedef int (*http_data_cb) (http_parser*, const char *at, size_t length);

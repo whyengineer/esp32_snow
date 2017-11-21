@@ -9,6 +9,10 @@ author:大约在秋季(qq:814605129)
 /**
  * 使用SDMMC外设访问SD卡，读取mp3文件进行解码并保存到文件
  */
+
+
+#ifdef CONFIG_AUDIO_HELIX
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -192,6 +196,6 @@ void app_main() {
     //esp_vfs_fat_sdmmc_unmount();
 }
 
-
+#endif
 
 

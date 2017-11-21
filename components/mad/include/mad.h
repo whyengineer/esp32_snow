@@ -19,6 +19,11 @@
  * If you would like to negotiate alternate licensing terms, you may do
  * so by contacting: Underbit Technologies, Inc. <info@underbit.com>
  */
+#ifndef MAD_H
+#define MAD_H
+
+
+#ifdef CONFIG_AUDIO_MAD
 
 # ifdef __cplusplus
 extern "C" {
@@ -964,3 +969,11 @@ int mad_decoder_message(struct mad_decoder *, void *, unsigned int *);
 # ifdef __cplusplus
 }
 # endif
+
+#else
+
+#error Not enable the mad lib, make menuconfig to enable it
+
+#endif
+
+#endif

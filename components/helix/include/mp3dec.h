@@ -44,6 +44,9 @@
 #ifndef _MP3DEC_H
 #define _MP3DEC_H
 
+
+#ifdef CONFIG_AUDIO_HELIX
+
 #if defined(_WIN32) && !defined(_WIN32_WCE)
 #
 #elif defined(_WIN32) && defined(_WIN32_WCE) && defined(ARM)
@@ -131,5 +134,7 @@ int MP3FindSyncWord(unsigned char *buf, int nBytes);
 #ifdef __cplusplus
 }
 #endif
-
+#else
+#error Not enable the helix lib, make menuconfig to enable it
+#endif
 #endif	/* _MP3DEC_H */
