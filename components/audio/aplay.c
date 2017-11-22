@@ -59,14 +59,14 @@ void aplay_wav(char* filename){
 #ifdef CONFIG_AUDIO_HELIX
 
 void aplay_mp3(char* filename){
-  unsigned char *read_buffer=heap_caps_malloc(MAINBUF_SIZE,MALLOC_CAP_SPIRAM);
+  unsigned char *read_buffer=malloc(MAINBUF_SIZE);
   if(read_buffer==NULL){
     ESP_LOGE(TAG,"malloc read buf failed");
     return;
   }
   FILE *fd1 = fopen(filename, "rb");
   if (!fd1) {
-    heap_caps_free(read_buffer);
+    free(read_buffer);
     ESP_LOGE(TAG,"open %s error",filename);
     return;
   }
@@ -80,14 +80,14 @@ void aplay_mp3(char* filename){
   HMP3Decoder *decoder = MP3InitDecoder(); 
   if (!decoder) {
       fclose(fd1);
-      heap_caps_free(read_buffer);
+      free(read_buffer);
       ESP_LOGE(TAG,"init mp3 decoder error");
       return;
   }
-  short int *out=heap_caps_malloc(1152 * 2,MALLOC_CAP_SPIRAM);
+  short int *out=malloc(1152 * 2 *2);
   if(out==NULL){
     fclose(fd1);
-    heap_caps_free(read_buffer);
+    free(read_buffer);
     MP3FreeDecoder(decoder);
     ESP_LOGE(TAG,"malloc out buf failed");
     return;
@@ -125,26 +125,31 @@ void aplay_mp3(char* filename){
   while (!eof) {
     read_bytes = fread(read_buffer + left, 1, sizeof(read_buffer) - left, fd1);
     left += read_bytes;
-    if (left == 0) break;
+    if (left == 0){
+      ESP_LOGE(TAG,"read file failed");
+      break;
+    }
     offset = MP3FindSyncWord(read_buffer, left);
     if (offset < 0) {
         //当前缓冲中无同步字，重新读取数据
         left = 0;
-        //printf("can not find sync words\n");
+        ESP_LOGI(TAG,"can not find sync words\n");
         continue;
     }
     if (offset > 0) {
         //去除头部无效数据
+        ESP_LOGI(TAG,"clear not used data");
         left -= offset;
         memmove(read_buffer, read_buffer + offset, left);
     }
-    //printf("sync offset: %d, left: %d\n", offset, left);
+    ESP_LOGI(TAG,"sync offset: %d, left: %d\n", offset, left);
     //读满数据缓冲
     unsigned char *read_ptr;
     read_bytes = fread(read_buffer + left, 1, sizeof(read_buffer) - left, fd1);
     left += read_bytes;
     if (left == 0) eof = 1;
     read_ptr = read_buffer;
+    ESP_LOGI(TAG,"start decode a frame");
     ret = MP3Decode(decoder, &read_ptr, &left, out, 0);
     if (ret == ERR_MP3_NONE) {
       int outputSamps;
@@ -170,16 +175,16 @@ void aplay_mp3(char* filename){
       memmove(read_buffer, read_ptr, left);
     } else {
       if (ret == ERR_MP3_INDATA_UNDERFLOW) {
-          //printf("ERR_MP3_INDATA_UNDERFLOW\n");
+          ESP_LOGE(TAG,"ERR_MP3_INDATA_UNDERFLOW\n");
           left = 0;
       } else if (ret == ERR_MP3_MAINDATA_UNDERFLOW) {
           /* do nothing - next call to decode will provide more mainData */
-          //printf("ERR_MP3_MAINDATA_UNDERFLOW, continue to find sys words, left: %d\n", left);
+          ESP_LOGE(TAG,"ERR_MP3_MAINDATA_UNDERFLOW, continue to find sys words, left: %d\n", left);
           if (left > 0) {
               memmove(read_buffer, read_ptr, left);
           }
       } else {
-          //printf("unknown error: %d, left: %d\n", ret, left);
+          ESP_LOGE(TAG,"unknown error: %d, left: %d\n", ret, left);
           // skip this frame
           if (left > 0) {
               read_ptr++;
@@ -191,9 +196,9 @@ void aplay_mp3(char* filename){
 
   }
   MP3FreeDecoder(decoder);
-  heap_caps_free(out);
+  free(out);
   fclose(fd1);
-  heap_caps_free(read_buffer);
+  free(read_buffer);
   ESP_LOGI(TAG,"play file:%s finished",filename);
 }
 #endif

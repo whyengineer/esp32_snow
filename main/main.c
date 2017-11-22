@@ -35,7 +35,7 @@
 #include "mdns_task.h"
 #include "audio.h"
 #include <dirent.h>
-#include "esp_heap_alloc_caps.h"
+#include "esp_heap_caps.h"
 #include "euler.h"
 #include "websocket.h"
 #include "esp_heap_caps.h"
@@ -56,7 +56,7 @@ void app_main()
     event_engine_init();
     nvs_flash_init();
     tcpip_adapter_init();
-    wifi_init_sta("Frankie","yp6sfnff");
+    wifi_init_sta("Transee21_TP1","02197545");
     //wifi_init_softap();
     /*init gpio*/
     gpio_config_t io_conf;
@@ -142,18 +142,18 @@ void app_main()
     gpio_set_level(GPIO_OUTPUT_IO_0, 1);
     uint8_t cnt=0;
     while(1){
-        //gpio_set_level(GPIO_OUTPUT_IO_0, cnt%2);
+        gpio_set_level(GPIO_OUTPUT_IO_0, cnt%2);
         //memset(samples_data,0,1024);
         //vTaskDelay(1000 / portTICK_PERIOD_MS);
         //vTaskSuspend(NULL);
         //ESP_LOGI(TAG, "cnt:%d",cnt);
         //aplay("/sdcard/music.wav");
-        aplay_mp3("/sdcard/music.mp3");
+        aplay_mp3("/sdcard/music2.mp3");
 
         //hal_i2s_read(0,samples_data,256,portMAX_DELAY);
         //hal_i2s_write(0,samples_data,256,portMAX_DELAY);
         vTaskDelay(5000 / portTICK_PERIOD_MS);
-        //cnt++;
+        cnt++;
     }
 }
 

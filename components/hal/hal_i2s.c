@@ -19,8 +19,8 @@ void hal_i2s_init(uint8_t i2s_num,uint32_t rate,uint8_t bits,uint8_t ch)
         .bits_per_sample = bits,                                              
         .channel_format = chanel,                           //2-channels
         .communication_format = I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB,
-        .dma_buf_count = 4,
-        .dma_buf_len = 768,                                                      //
+        .dma_buf_count = 3,
+        .dma_buf_len = 1024,                                                      //
         .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1                                //Interrupt level 1
     };
     i2s_pin_config_t pin_config = {
