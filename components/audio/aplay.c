@@ -57,149 +57,92 @@ void aplay_wav(char* filename){
 }
 
 #ifdef CONFIG_AUDIO_HELIX
-
-void aplay_mp3(char* filename){
-  unsigned char *read_buffer=malloc(MAINBUF_SIZE);
-  if(read_buffer==NULL){
-    ESP_LOGE(TAG,"malloc read buf failed");
-    return;
-  }
-  FILE *fd1 = fopen(filename, "rb");
-  if (!fd1) {
-    free(read_buffer);
-    ESP_LOGE(TAG,"open %s error",filename);
-    return;
-  }
-  // FILE *fd2 = fopen("/sdcard/out.pcm", "w");
-  // if (!fd2) {
-  //     printf("open out.pcm error\n");
-  //     fclose(fd1);
-  //     vTaskDelete(NULL);
-  //     return;
-  // }
-  HMP3Decoder *decoder = MP3InitDecoder(); 
-  if (!decoder) {
-      fclose(fd1);
-      free(read_buffer);
-      ESP_LOGE(TAG,"init mp3 decoder error");
-      return;
-  }
-  short int *out=malloc(1152 * 2 *2);
-  if(out==NULL){
-    fclose(fd1);
-    free(read_buffer);
-    MP3FreeDecoder(decoder);
-    ESP_LOGE(TAG,"malloc out buf failed");
-    return;
-  }
-  struct stat st; 
-  stat(filename, &st);
-  long long size = st.st_size;
-  int eof = 0;
-  int read_bytes;
-  int offset;
-  int left = 0;               //遗留未处理的字节
-  int ret;
-  char tag[10];
-  int tag_len = 0;
-  read_bytes = fread(tag, 1, 10, fd1);
-  if (read_bytes != 10) {
-    eof = 1;
-  } else {
-    if (strncmp("ID3", tag, 3) == 0) {
-      tag_len = ((tag[6] & 0x7F) << 21) |
-        ((tag[7] & 0x7F) << 14) |
-        ((tag[8] & 0x7F) << 7) | (tag[9] & 0x7F);
-      ESP_LOGI(TAG,"tag_len: %d", tag_len);
-      if (tag_len >= size) {
-        ESP_LOGE(TAG,"file format error");
-        eof = 1;
-      } else {
-        fseek(fd1, tag_len - 10, SEEK_SET);
-      }
-    } else {
-      fseek(fd1, 0, SEEK_SET);
-    }
-  }   
-
-  while (!eof) {
-    read_bytes = fread(read_buffer + left, 1, sizeof(read_buffer) - left, fd1);
-    left += read_bytes;
-    if (left == 0){
-      ESP_LOGE(TAG,"read file failed");
-      break;
-    }
-    offset = MP3FindSyncWord(read_buffer, left);
-    if (offset < 0) {
-        //当前缓冲中无同步字，重新读取数据
-        left = 0;
-        ESP_LOGI(TAG,"can not find sync words\n");
-        continue;
-    }
-    if (offset > 0) {
-        //去除头部无效数据
-        ESP_LOGI(TAG,"clear not used data");
-        left -= offset;
-        memmove(read_buffer, read_buffer + offset, left);
-    }
-    ESP_LOGI(TAG,"sync offset: %d, left: %d\n", offset, left);
-    //读满数据缓冲
-    unsigned char *read_ptr;
-    read_bytes = fread(read_buffer + left, 1, sizeof(read_buffer) - left, fd1);
-    left += read_bytes;
-    if (left == 0) eof = 1;
-    read_ptr = read_buffer;
-    ESP_LOGI(TAG,"start decode a frame");
-    ret = MP3Decode(decoder, &read_ptr, &left, out, 0);
-    if (ret == ERR_MP3_NONE) {
-      int outputSamps;
-      MP3FrameInfo frame_info;
-      MP3GetLastFrameInfo(decoder, &frame_info);
-      /* set sample rate */
-      /* write to sound device */
-      outputSamps = frame_info.outputSamps;
-      ESP_LOGI(TAG,"sample rate: %d, channels: %d, outputSamps: %d\n", frame_info.samprate, frame_info.nChans, outputSamps);
-      if (outputSamps > 0) {
-          if (frame_info.nChans == 1) {
-              int i;
-              for (i = outputSamps - 1; i >= 0; i--) {
-                  out[i * 2] = out[i];
-                  out[i * 2 + 1] = out[i];
-              }
-              outputSamps *= 2;
-          }
-          //fwrite(out, 1, outputSamps * sizeof(short), fd2);
-      } else {
-          //printf("no samples\n");
-      }
-      memmove(read_buffer, read_ptr, left);
-    } else {
-      if (ret == ERR_MP3_INDATA_UNDERFLOW) {
-          ESP_LOGE(TAG,"ERR_MP3_INDATA_UNDERFLOW\n");
-          left = 0;
-      } else if (ret == ERR_MP3_MAINDATA_UNDERFLOW) {
-          /* do nothing - next call to decode will provide more mainData */
-          ESP_LOGE(TAG,"ERR_MP3_MAINDATA_UNDERFLOW, continue to find sys words, left: %d\n", left);
-          if (left > 0) {
-              memmove(read_buffer, read_ptr, left);
-          }
-      } else {
-          ESP_LOGE(TAG,"unknown error: %d, left: %d\n", ret, left);
-          // skip this frame
-          if (left > 0) {
-              read_ptr++;
-              left--;
-              memmove(read_buffer, read_ptr, left);
-          }
-      }
+void aplay_mp3(char *path)
+{
+    ESP_LOGI(TAG,"start to decode ...");
+    HMP3Decoder hMP3Decoder;
+    MP3FrameInfo mp3FrameInfo;
+    unsigned char *readBuf=malloc(MAINBUF_SIZE);
+    short *output=malloc(1153*4);;
+    hMP3Decoder = MP3InitDecoder();
+    if (hMP3Decoder == 0)
+    {
+      ESP_LOGE(TAG,"memory is not enough..");
     }
 
-  }
-  MP3FreeDecoder(decoder);
-  free(out);
-  fclose(fd1);
-  free(read_buffer);
-  ESP_LOGI(TAG,"play file:%s finished",filename);
+    int samplerate=0;
+    i2s_zero_dma_buffer(0);
+    FILE *mp3File=fopen( path,"rb");
+    char tag[10];
+    int tag_len = 0;
+    int read_bytes = fread(tag, 1, 10, mp3File);
+    if(read_bytes == 10) 
+       {
+        if (memcmp(tag,"ID3",3) == 0) 
+         {
+          tag_len = ((tag[6] & 0x7F)<< 21)|((tag[7] & 0x7F) << 14) | ((tag[8] & 0x7F) << 7) | (tag[9] & 0x7F);
+            // ESP_LOGI(TAG,"tag_len: %d %x %x %x %x", tag_len,tag[6],tag[7],tag[8],tag[9]);
+          fseek(mp3File, tag_len - 10, SEEK_SET);
+         }
+        else 
+         {
+            fseek(mp3File, 0, SEEK_SET);
+         }
+       }
+       unsigned char* input = &readBuf[0];
+       int bytesLeft = 0;
+       int outOfData = 0;
+       unsigned char* readPtr = readBuf;
+       while (1)
+       {    
+  
+         if (bytesLeft < MAINBUF_SIZE)
+            {
+                memmove(readBuf, readPtr, bytesLeft);
+                int br = fread(readBuf + bytesLeft, 1, MAINBUF_SIZE - bytesLeft, mp3File);
+                if ((br == 0)&&(bytesLeft==0)) break;
+ 
+                bytesLeft = bytesLeft + br;
+                readPtr = readBuf;
+            }
+        int offset = MP3FindSyncWord(readPtr, bytesLeft);
+        if (offset < 0)
+        {  
+             ESP_LOGE(TAG,"MP3FindSyncWord not find");
+             bytesLeft=0;
+             continue;
+        }
+        else
+        {
+          readPtr += offset;                         //data start point
+          bytesLeft -= offset;                 //in buffer
+          int errs = MP3Decode(hMP3Decoder, &readPtr, &bytesLeft, output, 0);
+          if (errs != 0)
+          {
+              ESP_LOGE(TAG,"MP3Decode failed ,code is %d ",errs);
+              break;
+          }
+          MP3GetLastFrameInfo(hMP3Decoder, &mp3FrameInfo);   
+          if(samplerate!=mp3FrameInfo.samprate)
+          {
+              samplerate=mp3FrameInfo.samprate;
+              //hal_i2s_init(0,samplerate,16,mp3FrameInfo.nChans);
+              i2s_set_clk(0,samplerate,16,mp3FrameInfo.nChans);
+              //wm8978_samplerate_set(samplerate);
+              ESP_LOGI(TAG,"mp3file info---bitrate=%d,layer=%d,nChans=%d,samprate=%d,outputSamps=%d",mp3FrameInfo.bitrate,mp3FrameInfo.layer,mp3FrameInfo.nChans,mp3FrameInfo.samprate,mp3FrameInfo.outputSamps);
+          }   
+          i2s_write_bytes(0,(const char*)output,mp3FrameInfo.outputSamps*2, 1000 / portTICK_RATE_MS);
+        }
+      
+      }
+    i2s_zero_dma_buffer(0);
+    //i2s_driver_uninstall(0);
+    MP3FreeDecoder(hMP3Decoder);
+    free(readBuf);
+    free(output);  
+    fclose(mp3File);
+ 
+ESP_LOGI(TAG,"end mp3 decode ..");
 }
 #endif
 // static enum mad_flow input_func(void *data, struct mad_stream *stream);

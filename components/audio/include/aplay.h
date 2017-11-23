@@ -24,6 +24,5 @@ typedef struct
 void aplay_wav(char* filename);
 void aplay_mp3(char* filename);
 
-
  #endif
 
