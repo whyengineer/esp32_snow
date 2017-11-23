@@ -44,6 +44,7 @@
 #ifndef _MP3DEC_H
 #define _MP3DEC_H
 
+#ifdef CONFIG_AUDIO_HELIX
 
 #if defined(_WIN32) && !defined(_WIN32_WCE)
 #
@@ -132,5 +133,13 @@ int MP3FindSyncWord(unsigned char *buf, int nBytes);
 #ifdef __cplusplus
 }
 #endif
+
+
+#else
+#error "helix is not enabled"
+#endif
+
+
+
 
 #endif	/* _MP3DEC_H */

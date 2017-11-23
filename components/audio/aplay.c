@@ -7,144 +7,314 @@
 #include "hal_i2s.h"
 #include "aplay.h"
 #include <sys/stat.h>
-
 #ifdef CONFIG_AUDIO_MAD
-  #include "mad.h"
+#define MAINBUF_SIZE 2889
+#include "mad.h"
 #endif
-
 #ifdef CONFIG_AUDIO_HELIX
-  #include "mp3dec.h"
+#include "mp3dec.h"
 #endif
 
 #define TAG "aplay"
 
 struct file_bufer {
-  unsigned char *buf;
-  unsigned long length;
-  uint32_t flen;
-  uint32_t fpos;
-  FILE* f;
+	unsigned char *buf;
+	unsigned long length;
+	uint32_t flen;
+	uint32_t fpos;
+	FILE* f;
 };
 
 void aplay_wav(char* filename){
 	//"/sdcard/test.wav"
 	WAV_HEADER wav_head;
 	FILE *f= fopen(filename, "r");
-    if (f == NULL) {
-        ESP_LOGE(TAG,"Failed to open file:%s",filename);
-        return;
-    }
-    //fprintf(f, "Hello %s!\n", card->cid.name);
-    int rlen=fread(&wav_head,1,sizeof(wav_head),f);
-    if(rlen!=sizeof(wav_head)){
-        ESP_LOGE(TAG,"read faliled");
-        return;
-    }
-    int channels = wav_head.wChannels;
-    int frequency = wav_head.nSamplesPersec;
-    int bit = wav_head.wBitsPerSample;
-    int datalen= wav_head.wSampleLength;
-    ESP_LOGI(TAG,"channels:%d,frequency:%d,bit:%d\n",channels,frequency,bit);
-    char* samples_data = malloc(1024);
-   	do{
-   		rlen=fread(samples_data,1,1024,f);
-   		//datalen-=rlen;
-    	hal_i2s_write(0,samples_data,rlen,5000);
-    }while(rlen>0);
-    fclose(f);
-    free(samples_data);
-    f=NULL;
+		if (f == NULL) {
+				ESP_LOGE(TAG,"Failed to open file:%s",filename);
+				return;
+		}
+		//fprintf(f, "Hello %s!\n", card->cid.name);
+		int rlen=fread(&wav_head,1,sizeof(wav_head),f);
+		if(rlen!=sizeof(wav_head)){
+				ESP_LOGE(TAG,"read faliled");
+				return;
+		}
+		int channels = wav_head.wChannels;
+		int frequency = wav_head.nSamplesPersec;
+		int bit = wav_head.wBitsPerSample;
+		int datalen= wav_head.wSampleLength;
+		ESP_LOGI(TAG,"channels:%d,frequency:%d,bit:%d\n",channels,frequency,bit);
+		char* samples_data = malloc(1024);
+		do{
+			rlen=fread(samples_data,1,1024,f);
+			//datalen-=rlen;
+			hal_i2s_write(0,samples_data,rlen,5000);
+		}while(rlen>0);
+		fclose(f);
+		free(samples_data);
+		f=NULL;
 }
 
 #ifdef CONFIG_AUDIO_HELIX
 void aplay_mp3(char *path)
 {
-    ESP_LOGI(TAG,"start to decode ...");
-    HMP3Decoder hMP3Decoder;
-    MP3FrameInfo mp3FrameInfo;
-    unsigned char *readBuf=malloc(MAINBUF_SIZE);
-    short *output=malloc(1153*4);;
-    hMP3Decoder = MP3InitDecoder();
-    if (hMP3Decoder == 0)
-    {
-      ESP_LOGE(TAG,"memory is not enough..");
-    }
+		ESP_LOGI(TAG,"start to decode ...");
+		HMP3Decoder hMP3Decoder;
+		MP3FrameInfo mp3FrameInfo;
+		unsigned char *readBuf=malloc(MAINBUF_SIZE);
+		if(readBuf==NULL){
+			ESP_LOGE(TAG,"readBuf malloc failed");
+			return;
+		}
+		short *output=malloc(1153*4);
+		if(output==NULL){
+			free(readBuf);
+			ESP_LOGE(TAG,"outBuf malloc failed");
+		}
+		hMP3Decoder = MP3InitDecoder();
+		if (hMP3Decoder == 0){
+			free(readBuf);
+			free(outBuf);
+			ESP_LOGE(TAG,"memory is not enough..");
+		}
 
-    int samplerate=0;
-    i2s_zero_dma_buffer(0);
-    FILE *mp3File=fopen( path,"rb");
-    char tag[10];
-    int tag_len = 0;
-    int read_bytes = fread(tag, 1, 10, mp3File);
-    if(read_bytes == 10) 
-       {
-        if (memcmp(tag,"ID3",3) == 0) 
-         {
-          tag_len = ((tag[6] & 0x7F)<< 21)|((tag[7] & 0x7F) << 14) | ((tag[8] & 0x7F) << 7) | (tag[9] & 0x7F);
-            // ESP_LOGI(TAG,"tag_len: %d %x %x %x %x", tag_len,tag[6],tag[7],tag[8],tag[9]);
-          fseek(mp3File, tag_len - 10, SEEK_SET);
-         }
-        else 
-         {
-            fseek(mp3File, 0, SEEK_SET);
-         }
-       }
-       unsigned char* input = &readBuf[0];
-       int bytesLeft = 0;
-       int outOfData = 0;
-       unsigned char* readPtr = readBuf;
-       while (1)
-       {    
-  
-         if (bytesLeft < MAINBUF_SIZE)
-            {
-                memmove(readBuf, readPtr, bytesLeft);
-                int br = fread(readBuf + bytesLeft, 1, MAINBUF_SIZE - bytesLeft, mp3File);
-                if ((br == 0)&&(bytesLeft==0)) break;
+		int samplerate=0;
+		i2s_zero_dma_buffer(0);
+		FILE *mp3File=fopen( path,"rb");
+		if(mp3File==NULL){
+			MP3FreeDecoder(hMP3Decoder);
+			free(readBuf);
+			free(outBuf);
+			ESP_LOGE(TAG,"open file failed");
+		}
+		char tag[10];
+		int tag_len = 0;
+		int read_bytes = fread(tag, 1, 10, mp3File);
+		if(read_bytes == 10) 
+			 {
+				if (memcmp(tag,"ID3",3) == 0) 
+				 {
+					tag_len = ((tag[6] & 0x7F)<< 21)|((tag[7] & 0x7F) << 14) | ((tag[8] & 0x7F) << 7) | (tag[9] & 0x7F);
+						// ESP_LOGI(TAG,"tag_len: %d %x %x %x %x", tag_len,tag[6],tag[7],tag[8],tag[9]);
+					fseek(mp3File, tag_len - 10, SEEK_SET);
+				 }
+				else 
+				 {
+						fseek(mp3File, 0, SEEK_SET);
+				 }
+			 }
+			 unsigned char* input = &readBuf[0];
+			 int bytesLeft = 0;
+			 int outOfData = 0;
+			 unsigned char* readPtr = readBuf;
+			 while (1)
+			 {    
+	
+				 if (bytesLeft < MAINBUF_SIZE)
+						{
+								memmove(readBuf, readPtr, bytesLeft);
+								int br = fread(readBuf + bytesLeft, 1, MAINBUF_SIZE - bytesLeft, mp3File);
+								if ((br == 0)&&(bytesLeft==0)) break;
  
-                bytesLeft = bytesLeft + br;
-                readPtr = readBuf;
-            }
-        int offset = MP3FindSyncWord(readPtr, bytesLeft);
-        if (offset < 0)
-        {  
-             ESP_LOGE(TAG,"MP3FindSyncWord not find");
-             bytesLeft=0;
-             continue;
-        }
-        else
-        {
-          readPtr += offset;                         //data start point
-          bytesLeft -= offset;                 //in buffer
-          int errs = MP3Decode(hMP3Decoder, &readPtr, &bytesLeft, output, 0);
-          if (errs != 0)
-          {
-              ESP_LOGE(TAG,"MP3Decode failed ,code is %d ",errs);
-              break;
-          }
-          MP3GetLastFrameInfo(hMP3Decoder, &mp3FrameInfo);   
-          if(samplerate!=mp3FrameInfo.samprate)
-          {
-              samplerate=mp3FrameInfo.samprate;
-              //hal_i2s_init(0,samplerate,16,mp3FrameInfo.nChans);
-              i2s_set_clk(0,samplerate,16,mp3FrameInfo.nChans);
-              //wm8978_samplerate_set(samplerate);
-              ESP_LOGI(TAG,"mp3file info---bitrate=%d,layer=%d,nChans=%d,samprate=%d,outputSamps=%d",mp3FrameInfo.bitrate,mp3FrameInfo.layer,mp3FrameInfo.nChans,mp3FrameInfo.samprate,mp3FrameInfo.outputSamps);
-          }   
-          i2s_write_bytes(0,(const char*)output,mp3FrameInfo.outputSamps*2, 1000 / portTICK_RATE_MS);
-        }
-      
-      }
-    i2s_zero_dma_buffer(0);
-    //i2s_driver_uninstall(0);
-    MP3FreeDecoder(hMP3Decoder);
-    free(readBuf);
-    free(output);  
-    fclose(mp3File);
+								bytesLeft = bytesLeft + br;
+								readPtr = readBuf;
+						}
+				int offset = MP3FindSyncWord(readPtr, bytesLeft);
+				if (offset < 0)
+				{  
+						 ESP_LOGE(TAG,"MP3FindSyncWord not find");
+						 bytesLeft=0;
+						 continue;
+				}
+				else
+				{
+					readPtr += offset;                         //data start point
+					bytesLeft -= offset;                 //in buffer
+					int errs = MP3Decode(hMP3Decoder, &readPtr, &bytesLeft, output, 0);
+					if (errs != 0)
+					{
+							ESP_LOGE(TAG,"MP3Decode failed ,code is %d ",errs);
+							break;
+					}
+					MP3GetLastFrameInfo(hMP3Decoder, &mp3FrameInfo);   
+					if(samplerate!=mp3FrameInfo.samprate)
+					{
+							samplerate=mp3FrameInfo.samprate;
+							//hal_i2s_init(0,samplerate,16,mp3FrameInfo.nChans);
+							i2s_set_clk(0,samplerate,16,mp3FrameInfo.nChans);
+							//wm8978_samplerate_set(samplerate);
+							ESP_LOGI(TAG,"mp3file info---bitrate=%d,layer=%d,nChans=%d,samprate=%d,outputSamps=%d",mp3FrameInfo.bitrate,mp3FrameInfo.layer,mp3FrameInfo.nChans,mp3FrameInfo.samprate,mp3FrameInfo.outputSamps);
+					}   
+					i2s_write_bytes(0,(const char*)output,mp3FrameInfo.outputSamps*2, 1000 / portTICK_RATE_MS);
+				}
+			
+			}
+		i2s_zero_dma_buffer(0);
+		//i2s_driver_uninstall(0);
+		MP3FreeDecoder(hMP3Decoder);
+		free(readBuf);
+		free(output);  
+		fclose(mp3File);
  
-ESP_LOGI(TAG,"end mp3 decode ..");
+		ESP_LOGI(TAG,"end mp3 decode ..");
 }
 #endif
+#ifdef CONFIG_AUDIO_MAD
+typedef struct  
+{  
+		FILE* fp;  
+		unsigned char* buf;
+		size_t buf_len;  
+}FileBuf; 
+
+//get data 
+static enum mad_flow input(void *data, struct mad_stream *stream)  
+{  
+	enum mad_flow ret;
+	FileBuf* pMp3 = (FileBuf*)data;  
+	int used;
+	used=stream->bufend-stream->next_frame;
+	// ESP_LOGI("TAG","##used:%d",used);
+	memmove(pMp3->buf,stream->next_frame,used);
+	int rlen = fread( pMp3->buf+used, 1,pMp3->buf_len-used, pMp3->fp);
+	if(rlen!=pMp3->buf_len-used)
+		ret=MAD_FLOW_STOP;
+	else
+		ret=MAD_FLOW_CONTINUE;
+	mad_stream_buffer(stream,pMp3->buf,pMp3->buf_len);
+	return ret;
+}  
+	
+static enum mad_flow error(void *data, struct mad_stream *stream, struct mad_frame *frame) {
+    printf("dec err 0x%04x (%s)\n", stream->error, mad_stream_errorstr(stream));
+    return MAD_FLOW_CONTINUE;
+}
+
+void aplay_mp3(char*filename){
+	FileBuf fb;
+	int ret;
+	//open file
+	fb.fp=fopen(filename,"rb");
+	if(fb.fp==NULL){
+		ESP_LOGE(TAG,"open file failed");
+		return;
+	}
+	//malloc buf
+	fb.buf=malloc(MAINBUF_SIZE);
+	fb.buf_len=MAINBUF_SIZE;
+	if(fb.buf==NULL){
+		fclose(fb.fp);
+		ESP_LOGE(TAG,"read buf malloc failed");
+		return;
+	}
+	//init mad
+	struct mad_stream *stream;
+	struct mad_frame *frame;
+	struct mad_synth *synth;
+	stream = malloc(sizeof(struct mad_stream));
+	if(stream==NULL){
+		free(fb.buf);
+		fclose(fb.fp);
+		ESP_LOGE(TAG,"stream malloc failed");
+		return;
+	}
+	frame = malloc(sizeof(struct mad_frame));
+	if(frame==NULL){
+		free(stream);
+		free(fb.buf);
+		fclose(fb.fp);
+		ESP_LOGE(TAG,"frame malloc failed");
+		return;
+	}
+	synth = malloc(sizeof(struct mad_synth));
+	if(synth==NULL){
+		free(synth);
+		free(stream);
+		free(fb.buf);
+		fclose(fb.fp);
+		ESP_LOGE(TAG,"synth malloc failed");
+		return;
+	}
+	mad_stream_init(stream);
+    mad_frame_init(frame);
+    mad_synth_init(synth);
+	ESP_LOGI(TAG,"start to decode ...");
+	//check file header
+	char tag[10];
+	int tag_len = 0;
+	int read_bytes = fread(tag, 1, 10, fb.fp);
+	if(read_bytes == 10) {
+		if (memcmp(tag,"ID3",3) == 0) {
+			tag_len = ((tag[6] & 0x7F)<< 21)|((tag[7] & 0x7F) << 14) | ((tag[8] & 0x7F) << 7) | (tag[9] & 0x7F);
+				// ESP_LOGI(TAG,"tag_len: %d %x %x %x %x", tag_len,tag[6],tag[7],tag[8],tag[9]);
+			fseek(fb.fp, tag_len - 10, SEEK_SET);
+		}else {
+				fseek(fb.fp, 0, SEEK_SET);
+		}
+	}
+	//start real decode
+	while (1){    
+		if(input(&fb,stream)==MAD_FLOW_STOP)
+			break;
+		while(1){
+			ret=mad_frame_decode(frame,stream);
+			if(ret==-1){
+				if(!MAD_RECOVERABLE(stream->error)){
+					break;
+				}
+				error(NULL,stream,frame);
+			}
+			mad_synth_frame(synth,frame);
+		}
+	}
+	i2s_zero_dma_buffer(0);
+	ESP_LOGI(TAG,"end mp3 decode ..");
+	free(synth);
+	free(frame);
+	free(stream);
+
+	fclose(fb.fp);
+	free(fb.buf);
+}
+void set_dac_sample_rate(int rate)
+{
+	static int samplerate=0;
+	if(samplerate!=rate){
+		samplerate=rate;
+		ESP_LOGI(TAG,"samplerate:%d",samplerate);
+		i2s_set_clk(0,samplerate,16,2);
+	}
+}
+static inline signed int scale(mad_fixed_t sample)
+{
+  /* round */
+  sample += (1L << (MAD_F_FRACBITS - 16));
+
+  /* clip */
+  if (sample >= MAD_F_ONE)
+    sample = MAD_F_ONE - 1;
+  else if (sample < -MAD_F_ONE)
+    sample = -MAD_F_ONE;
+
+  /* quantize */
+  return sample >> (MAD_F_FRACBITS + 1 - 16);
+}
+void render_sample_block(short *short_sample_buff, int no_samples)
+{
+	// uint32_t len=no_samples*4;
+	for(int i=0;i<no_samples;i++){
+		short right=short_sample_buff[i];
+		short left=short_sample_buff[i];
+		char buf[4];
+		memcpy(buf,&right,2);
+		memcpy(buf+2,&left,2);
+		i2s_write_bytes(0,buf, 4, 1000 / portTICK_RATE_MS);
+	}
+    return;
+}
+#endif
+
+
 // static enum mad_flow input_func(void *data, struct mad_stream *stream);
 // static enum mad_flow output_func(void *data,struct mad_header const *header,struct mad_pcm *pcm);
 // static enum mad_flow error_func(void *data,struct mad_stream *stream,struct mad_frame *frame);
@@ -248,9 +418,9 @@ ESP_LOGI(TAG,"end mp3 decode ..");
 //     ESP_LOGE(TAG, "decoding error 0x%04x (%s) at byte offset %u\n",
 //         stream->error, mad_stream_errorstr(stream),
 //         stream->this_frame - mp3_file->buf);
-    
+		
 //     /* return MAD_FLOW_BREAK here to stop decoding (and propagate an error) */
-    
+		
 //     return MAD_FLOW_CONTINUE;
 // }
 // static enum mad_flow output_func(void *data,

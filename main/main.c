@@ -40,7 +40,6 @@
 #include "websocket.h"
 #include "esp_heap_caps.h"
 #include "aplay.h"
-#include "mqtt.h"
 
 #define TAG "main:"
 // typedef int (*http_data_cb) (http_parser*, const char *at, size_t length);
@@ -52,68 +51,6 @@
 #define GPIO_OUTPUT_IO_0    5
 #define GPIO_OUTPUT_PIN_SEL  ((1<<GPIO_OUTPUT_IO_0))
 
-
-void connected_cb(void *self, void *params)
-{
-    mqtt_client *client = (mqtt_client *)self;
-    mqtt_subscribe(client, "/test", 0);
-    mqtt_publish(client, "/test", "howdy!", 6, 0, 0);
-}
-void subscribe_cb(void *self, void *params)
-{
-    ESP_LOGI(TAG, "[APP] Subscribe ok, test publish msg");
-    mqtt_client *client = (mqtt_client *)self;
-    mqtt_publish(client, "/test", "abcde", 5, 0, 0);
-}
-
-void publish_cb(void *self, void *params)
-{
-
-}
-void data_cb(void *self, void *params)
-{
-    mqtt_client *client = (mqtt_client *)self;
-    mqtt_event_data_t *event_data = (mqtt_event_data_t *)params;
-
-    if(event_data->data_offset == 0) {
-
-        char *topic = malloc(event_data->topic_length + 1);
-        memcpy(topic, event_data->topic, event_data->topic_length);
-        topic[event_data->topic_length] = 0;
-        ESP_LOGI(TAG, "[APP] Publish topic: %s", topic);
-        free(topic);
-    }
-
-    // char *data = malloc(event_data->data_length + 1);
-    // memcpy(data, event_data->data, event_data->data_length);
-    // data[event_data->data_length] = 0;
-    ESP_LOGI(TAG, "[APP] Publish data[%d/%d bytes]",
-             event_data->data_length + event_data->data_offset,
-             event_data->data_total_length);
-    // data);
-
-    // free(data);
-
-}
-void start_mqtt_task(){
-    mqtt_settings settings = {
-        .host = "whyengineer.com",  // or domain, ex: "google.com",
-        .port = 1883,
-        .client_id = "mqtt_client_id", 
-        .username = "user",
-        .password = "pass",
-        .clean_session = 0, 
-        .keepalive = 120, //second
-        .connected_cb = connected_cb, // trigger when client connected to broker with valid infomations
-        .subscribe_cb = subscribe_cb, //trigger when client subscribe a topic successful 
-        .publish_cb = publish_cb, //trigger when client publish data to channel successful 
-        .data_cb = data_cb //trigger when client receive data from channel has subscribed
-    };
-    //wait the player start!!!!
-    vTaskDelay(10000);
-    mqtt_start(&settings);
-    vTaskSuspend(NULL);
-}
 void app_main()
 {
     esp_err_t err;
@@ -181,33 +118,18 @@ void app_main()
         ESP_LOGI(TAG, "ETHPGW:"IPSTR, IP2STR(&ip.gw));
         ESP_LOGI(TAG, "~~~~~~~~~~~");
     }
-    
+    /* task creat*/
     //xTaskCreate(&ws_server, "websocket_task",4096, NULL, 5, NULL);
     //xTaskCreate(&euler_task, "euler_task", 8196, NULL, 5, NULL);
     xTaskCreate(webserver_task, "web_server_task", 4096, NULL, +6, NULL);
-    vTaskDelay(2000);
-    //bt_speaker_start();
-    
-    //}while(1);
-    //if(create_tcp_server(8080)!=ESP_OK){
-      //  return;
-    //}
-    //mqtt_start(&settings);
-
-    xTaskCreate(start_mqtt_task, "mqtt_task", 4096, NULL, 4, NULL);
-    //char databuff[100]={0};
-    //int len=0;
-    //xTaskCreatePinnedToCore
-    char *samples_data;
-    samples_data=malloc(256);
-    memset(samples_data,0,256);
-    //http_client_get("http://vop.baidu.com/server_api",&settings_null,NULL);
+    /*print the last ram*/
     size_t free8start=heap_caps_get_free_size(MALLOC_CAP_8BIT);
     size_t free32start=heap_caps_get_free_size(MALLOC_CAP_32BIT);
     ESP_LOGI(TAG,"free mem8bit: %d mem32bit: %d\n",free8start,free32start);
+
     gpio_set_level(GPIO_OUTPUT_IO_0, 1);
+    
     uint8_t cnt=0;
-    uint8_t init_mqtt=0;
     while(1){
         gpio_set_level(GPIO_OUTPUT_IO_0, cnt%2);
         //memset(samples_data,0,1024);
