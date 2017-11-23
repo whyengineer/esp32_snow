@@ -20,7 +20,7 @@
 * lightweight http client
 * a simple PI(D) algorithm to fuison accel and gyro to euler and quaternion
 
-# Demo
+# Demo:
 * webradio
 * bluetooth audio
 * webcontrol
