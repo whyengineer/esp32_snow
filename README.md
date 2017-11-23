@@ -2,7 +2,7 @@
 ====
 
 # HardWare:
-![esp32_snow](https://img.whyengineer.com/esp32_snow.png)
+![esp32_snow](https://img.whyengineer.com/esp32_snow.png?imageView2/2/w/400/h/400/q/75|imageslim) 
 
 * CPU:Xtensa Dual-core 32-bit LX6 microprocessor(s),up to 600 DMIPS
 * RAM:4MB(external)+520K(internal)
