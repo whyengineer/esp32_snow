@@ -40,6 +40,9 @@
 #include "websocket.h"
 #include "esp_heap_caps.h"
 #include "aplay.h"
+#include "ftpd.h"
+
+
 
 #define TAG "main:"
 // typedef int (*http_data_cb) (http_parser*, const char *at, size_t length);
@@ -104,6 +107,7 @@ void app_main()
         return;
     }
     sdmmc_card_print_info(stdout, card);
+    //wait got ip address
     xEventGroupWaitBits(station_event_group,STA_GOTIP_BIT,pdTRUE,pdTRUE,portMAX_DELAY);
     ESP_LOGI(TAG,"got ip address");
     //xEventGroupWaitBits(eth_event_group,ETH_GOTIP_BIT,pdTRUE,pdTRUE,portMAX_DELAY);
@@ -119,16 +123,17 @@ void app_main()
         ESP_LOGI(TAG, "~~~~~~~~~~~");
     }
     /* task creat*/
-    //xTaskCreate(&ws_server, "websocket_task",4096, NULL, 5, NULL);
+    ftpd_start();
+    // xTaskCreate(&ftpd_task, "ftpd_task",4096, NULL, 5, NULL);
     //xTaskCreate(&euler_task, "euler_task", 8196, NULL, 5, NULL);
-    xTaskCreate(webserver_task, "web_server_task", 4096, NULL, +6, NULL);
+    // xTaskCreate(webserver_task, "web_server_task", 4096, NULL, +6, NULL);
     /*print the last ram*/
     size_t free8start=heap_caps_get_free_size(MALLOC_CAP_8BIT);
     size_t free32start=heap_caps_get_free_size(MALLOC_CAP_32BIT);
     ESP_LOGI(TAG,"free mem8bit: %d mem32bit: %d\n",free8start,free32start);
 
     gpio_set_level(GPIO_OUTPUT_IO_0, 1);
-    
+
     uint8_t cnt=0;
     while(1){
         gpio_set_level(GPIO_OUTPUT_IO_0, cnt%2);
@@ -137,7 +142,7 @@ void app_main()
         //vTaskSuspend(NULL);
         //ESP_LOGI(TAG, "cnt:%d",cnt);
         //aplay("/sdcard/music.wav");
-        aplay_mp3("/sdcard/music.mp3");
+        //aplay_mp3("/sdcard/music.mp3");
 
         //aplay_mp3("/sdcard/music1.mp3");
 
