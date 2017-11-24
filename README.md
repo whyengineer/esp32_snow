@@ -20,7 +20,7 @@
 * lightweight http client
 * a simple PI(D) algorithm to fuison accel and gyro to euler and quaternion
 ## ftp-server(about sd card)
-![ftp_server](https://img.whyengineer.com/data/ftp%E6%B5%8B%E8%AF%95%E5%9B%BE%E7%89%87.png?imageView2/2/w/800/h/800/q/75|imageslim) 
+![ftp_server](https://img.whyengineer.com/data/ftp%E6%B5%8B%E8%AF%95%E5%9B%BE%E7%89%87.png) 
 
 # Demo:
 * webradio
