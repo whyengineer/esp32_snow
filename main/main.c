@@ -41,7 +41,7 @@
 #include "esp_heap_caps.h"
 #include "aplay.h"
 #include "ftpd.h"
-
+#include "lame_test.h"
 
 
 #define TAG "main:"
@@ -123,7 +123,7 @@ void app_main()
         ESP_LOGI(TAG, "~~~~~~~~~~~");
     }
     /* task creat*/
-    ftpd_start();
+    //ftpd_start();
     // xTaskCreate(&ftpd_task, "ftpd_task",4096, NULL, 5, NULL);
     //xTaskCreate(&euler_task, "euler_task", 8196, NULL, 5, NULL);
     // xTaskCreate(webserver_task, "web_server_task", 4096, NULL, +6, NULL);
@@ -132,11 +132,12 @@ void app_main()
     size_t free32start=heap_caps_get_free_size(MALLOC_CAP_32BIT);
     ESP_LOGI(TAG,"free mem8bit: %d mem32bit: %d\n",free8start,free32start);
 
-    gpio_set_level(GPIO_OUTPUT_IO_0, 1);
+    //gpio_set_level(GPIO_OUTPUT_IO_0, 1);
 
     uint8_t cnt=0;
     while(1){
         gpio_set_level(GPIO_OUTPUT_IO_0, cnt%2);
+        lameTest();
         //memset(samples_data,0,1024);
         //vTaskDelay(1000 / portTICK_PERIOD_MS);
         //vTaskSuspend(NULL);
