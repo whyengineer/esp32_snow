@@ -43,6 +43,7 @@ void aplay_wav(char* filename){
 		int frequency = wav_head.nSamplesPersec;
 		int bit = wav_head.wBitsPerSample;
 		int datalen= wav_head.wSampleLength;
+		(void)datalen;
 		ESP_LOGI(TAG,"channels:%d,frequency:%d,bit:%d\n",channels,frequency,bit);
 		char* samples_data = malloc(1024);
 		do{
@@ -74,7 +75,7 @@ void aplay_mp3(char *path)
 		hMP3Decoder = MP3InitDecoder();
 		if (hMP3Decoder == 0){
 			free(readBuf);
-			free(outBuf);
+			free(output);
 			ESP_LOGE(TAG,"memory is not enough..");
 		}
 
@@ -84,7 +85,7 @@ void aplay_mp3(char *path)
 		if(mp3File==NULL){
 			MP3FreeDecoder(hMP3Decoder);
 			free(readBuf);
-			free(outBuf);
+			free(output);
 			ESP_LOGE(TAG,"open file failed");
 		}
 		char tag[10];

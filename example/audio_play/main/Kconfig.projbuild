@@ -18,10 +18,4 @@ config AUDIO_HELIX
 
 endchoice
 
-config FTP_SERVER
-    bool "Enable Ftp Server"
-    help
-        Enable Ftp server
-
-
 endmenu
