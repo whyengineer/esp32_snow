@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := ESP32_SNOW_MP3_ENCODE
+PROJECT_NAME := ESP32_SNOW_SPEEX
 
 
 a:=$(shell pwd)
