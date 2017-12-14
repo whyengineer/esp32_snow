@@ -93,7 +93,7 @@ void speex_decode_task(){
     /*Copy the data into the bit-stream struct*/
     speex_bits_read_from(&bits, cbits, nbBytes);
     /*Decode the data*/
-    ret=speex_decode(state, &bits, output);
+    speex_decode(state, &bits, output);
     // ESP_LOGI(TAG,"decode code:%d",ret);
     /*Copy from float to short (16 bits) for output*/
     for (i=0;i<FRAME_SIZE;i++)

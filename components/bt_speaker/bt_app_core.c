@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+#ifdef CONFIG_BT_ENABLED
+
+
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
@@ -117,3 +121,6 @@ void bt_app_task_shut_down(void)
         bt_app_task_queue = NULL;
     }
 }
+
+
+#endif
