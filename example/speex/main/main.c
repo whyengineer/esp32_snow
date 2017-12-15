@@ -198,7 +198,7 @@ void app_main()
     }
     sdmmc_card_print_info(stdout, card);
     //xTaskCreate(read_data_task, "read_data_task", 2048, NULL, 6, NULL);
-    xTaskCreate(speex_decode_task, "speex_task_encode", 4096*2, NULL, 5, NULL);
+    xTaskCreate(speex_encode_task, "speex_task_encode", 4096*2, NULL, 5, NULL);
     vTaskSuspend(NULL);
     while(1){
     }
