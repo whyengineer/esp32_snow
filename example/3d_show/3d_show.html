@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>ESP32 WebSocket Test</title>
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript">
+    
+        var WebSocket_connection;
+
+        
+        if (!"WebSocket" in window){  
+            alert("WebSocket NOT supported by your Browser!");
+            $('#WebSocket_State').text("WebSocket NOT supported by your Browser!");         
+        }
+        
+        window.onbeforeunload = function() {
+            websocket.onclose = function () {}; // disable onclose handler first
+            websocket.close()
+        };
+                
+        function connect(){
+            WebSocket_connection = new WebSocket($('#websocket_address').val());
+
+            $('#WebSocket_State').text("Connecting");
+            
+            WebSocket_connection.onopen = function(){
+              $('#WebSocket_State').html('<input type="text" id="websocket_message" value="Data to be send"/><a href=\"javascript:WebSocketSend()\">send WebSocket</a>');
+            };
+           
+            WebSocket_connection.onmessage = function (evt) { 
+                //read data and append it to output_div
+                animate(evt.data);
+                //$( "#output_div" ).append( evt.data + "<br>" ); 
+            };
+
+            WebSocket_connection.onerror = function()
+            {
+                $('#WebSocket_State').text("Error,...  connection closed");
+            };
+            
+            WebSocket_connection.onclose = function()
+            { 
+                $('#WebSocket_State').text("Disconnected");
+            };
+        }
+            
+                
+        function WebSocketSend(){
+            WebSocket_connection.send($('#websocket_message').val());
+        }
+        
+      </script>
+    <!-- <script src="https://cdn.bootcss.com/three.js/r83/three.js"></script>  -->
+    <script src="https://cdn.bootcss.com/three.js/r83/three.min.js"></script>
+   </head>
+   <body>
+   <script type="text/javascript">
+       var geometry, material, mesh;
+
+init();
+//animate();
+
+function init() {
+
+    camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 10 );
+    camera.position.z = 1;
+
+    scene = new THREE.Scene();
+
+    geometry = new THREE.BoxGeometry( 0.3, 0.3, 0.3 );
+    material = new THREE.MeshNormalMaterial();
+
+    mesh = new THREE.Mesh( geometry, material );
+    scene.add( mesh );
+
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+}
+
+function animate(data) {
+
+    //requestAnimationFrame( animate );
+    //console.log(data)
+    //console.log(typeof(data))
+    var euler=JSON.parse(data);
+    //console.log(euler.roll,euler.pitch,euler.yaw)
+    mesh.rotation.x = (euler.roll)/57320.0;
+    mesh.rotation.y = 0//(euler.yaw)/57320.0;
+    mesh.rotation.z = (euler.pitch)/57320.0;
+    //mesh.rotation.z=0;
+    renderer.render( scene, camera );
+
+}
+   </script>
+    <div id="WebSocket_State">
+        WebSocket Server: 
+        <input type="text" id="websocket_address" value="ws://192.168.31.45:9998"/>
+        <a href="javascript:connect()">Connect</a>
+        </div>
+    <br>
+    <div id="output_div">
+    Received WebSocket Messages:<br>
+    </div>
+      
+      
+   </body>
+</html>
