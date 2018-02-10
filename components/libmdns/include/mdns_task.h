@@ -3,7 +3,7 @@
 
 
 
-void mdns_task(void *pvParameters);
+void init_mdns();
 
 
 
