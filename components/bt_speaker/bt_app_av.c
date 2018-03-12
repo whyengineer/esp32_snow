@@ -13,7 +13,7 @@
 // limitations under the License.
 
 
-#ifdef CONFIG_BT_ENABLED
+
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -165,8 +165,8 @@ static void bt_av_hdl_avrc_evt(uint16_t event, void *p_param)
     switch (event) {
     case ESP_AVRC_CT_CONNECTION_STATE_EVT: {
         uint8_t *bda = rc->conn_stat.remote_bda;
-        ESP_LOGI(BT_AV_TAG, "avrc conn_state evt: state %d, feature 0x%x, [%02x:%02x:%02x:%02x:%02x:%02x]",
-                 rc->conn_stat.connected, rc->conn_stat.feat_mask, bda[0], bda[1], bda[2], bda[3], bda[4], bda[5]);
+        ESP_LOGI(BT_AV_TAG, "avrc conn_state evt: state %d, [%02x:%02x:%02x:%02x:%02x:%02x]",
+                 rc->conn_stat.connected, bda[0], bda[1], bda[2], bda[3], bda[4], bda[5]);
 
         if (rc->conn_stat.connected) {
             bt_av_new_track();
@@ -192,4 +192,3 @@ static void bt_av_hdl_avrc_evt(uint16_t event, void *p_param)
         break;
     }
 }
-#endif
