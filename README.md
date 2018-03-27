@@ -30,6 +30,15 @@
 * ble gateway
 * 3d show and control
 
+# Build:
+1. git clone https://github.com/espressif/esp-idf.git
+2. git checkout release/v3.0
+3. git submodule init
+4. git submoudle update
+5. git clone https://github.com/whyengineer/esp32_snow.git
+6. cd esp32_snow/example
+7. chose a demo and compile,if failed you can try rm the build dir and build again.
+
 # Todo List:
 
 * a perfect project config(use make menuconfig)
